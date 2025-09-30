@@ -6,10 +6,21 @@ import psycopg2
 
 load_dotenv()
 
-CONNECTION = None # paste connection string here or read from .env file
+CONNECTION = os.getenv("CONNECTION_STRING")
 
-DROP_TABLE = "DROP TABLE podcast, podcast_segment"
+def drop_tables():
+    conn = psycopg2.connect(CONNECTION)
+    cur = conn.cursor()
+    try:
+        cur.execute("DROP TABLE IF EXISTS segment CASCADE;")
+        cur.execute("DROP TABLE IF EXISTS podcast CASCADE;")
+        conn.commit()
+        print("Tables dropped successfully")
+    except Exception as e:
+        print(f"Error dropping tables: {e}\n")
+    finally:
+        cur.close()
+        conn.close()
 
-with psycopg2.connect(CONNECTION) as conn:
-    cursor = conn.cursor()
-    cursor.execute(DROP_TABLE)
+if __name__ == "__main__":
+    drop_tables()
