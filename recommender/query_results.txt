@@ -1,3 +1,70 @@
+Question 1, 3, 4
+SELECT p.title AS podcast_title,
+    s2.id AS segment_id,
+    s2.content,
+    s2.start_time,
+    s2.end_time,
+    (s1.embedding <-> s2.embedding) AS distance
+FROM segment AS s1
+JOIN segment AS s2 ON s2.id <> s1.id
+JOIN podcast AS p ON p.id = s2.podcast_id
+WHERE s1.id = %s
+ORDER BY distance ASC
+LIMIT 5;
+
+Question 2
+SELECT p.title AS podcast_title,
+    s2.id AS segment_id,
+    s2.content,
+    s2.start_time,
+    s2.end_time,
+    (s1.embedding <-> s2.embedding) AS distance
+FROM segment AS s1
+JOIN segment AS s2 ON s2.id <> s1.id
+JOIN podcast AS p ON p.id = s2.podcast_id
+WHERE s1.id = %s
+ORDER BY distance DESC
+LIMIT 5;
+
+Question 5
+WITH episode_centroids AS (
+    SELECT podcast_id, AVG(embedding) AS centroid
+    FROM segment
+    GROUP BY podcast_id
+),
+query_segment AS (
+    SELECT s.embedding, s.podcast_id
+    FROM segment s
+    WHERE s.id = %s
+)
+SELECT p.title,
+    (qs.embedding <-> ec.centroid) AS distance
+FROM query_segment AS qs
+JOIN episode_centroids AS ec ON ec.podcast_id <> qs.podcast_id
+JOIN podcast AS p ON p.id = ec.podcast_id
+ORDER BY distance ASC
+LIMIT 5;
+
+
+Question 6
+WITH episode_centroids AS (
+    SELECT podcast_id, AVG(embedding) AS centroid
+    FROM segment
+    GROUP BY podcast_id
+),
+query_segment AS (
+    SELECT ec.centroid
+    FROM episode_centroids AS ec
+    WHERE ec.podcast_id = %s
+)
+SELECT p.title,
+    (qs.centroid <-> ec.centroid) AS distance
+FROM query_segment AS qs
+JOIN episode_centroids AS ec ON ec.podcast_id <> %s
+JOIN podcast AS p ON p.id = ec.podcast_id
+ORDER BY distance ASC
+LIMIT 5;
+
 === Q1: 5 most similar to 267:476 ===
 +---------------------------------------------------------------------------------------------------------------+--------------+------------------------------------------------------------+--------------+-------------+------------+
 | podcast_title                                                                                                 | segment_id   | content                                                    |   start_time |    end_time |   distance |
